@@ -1,0 +1,50 @@
+{
+  "name": "realfy-fitness-app",
+  "private": true,
+  "version": "0.0.0",
+  "proxy": "http://localhost:5000",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.22-rc.20250304",
+    "@react-three/drei": "^10.0.6",
+    "@react-three/fiber": "^9.1.2",
+    "axios": "^1.8.4",
+    "chart.js": "^4.4.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "drei": "^0.0.45",
+    "express": "^5.1.0",
+    "mongoose": "^8.13.2",
+    "react": "^19.0.0",
+    "react-chartjs-2": "^5.3.0",
+    "react-dom": "^19.0.0",
+    "react-three-fiber": "^6.0.13",
+    "react-webcam": "^7.2.0",
+    "three": "^0.175.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.22.0",
+    "@tailwindcss/postcss": "^4.1.4",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.4.1",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.22.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "postcss": "^8.5.3",
+    "vite": "^6.3.2"
+  },
+  "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
+  "main": "eslint.config.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
