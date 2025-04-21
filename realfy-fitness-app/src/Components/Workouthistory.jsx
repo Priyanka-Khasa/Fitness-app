@@ -24,7 +24,7 @@ const WorkoutHistory = () => {
 
   const fetchSessions = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/sessions");
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/sessions`);
       setSessions(res.data);
       setLoading(false);
     } catch (err) {
@@ -37,7 +37,7 @@ const WorkoutHistory = () => {
     const confirmDelete = window.confirm("Are you sure you want to delete all sessions?");
     if (!confirmDelete) return;
     try {
-      await axios.delete("http://localhost:5000/api/sessions");
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/sessions`);
       alert("✅ All sessions deleted");
       fetchSessions();
     } catch (err) {
