@@ -14,8 +14,8 @@ const AuthForm = ({ onAuthSuccess }) => {
     e.preventDefault(); // ✅ This should come before anything else
 
     const url = isLogin
-  ? "/api/auth/login"
-  : "/api/auth/register";
+  ? "https://fitness-app-2-tiwu.onrender.com/api/auth/login"
+  : "https://fitness-app-2-tiwu.onrender.com/api/auth/register";
     try {
       const res = await axios.post(url, form);
 
