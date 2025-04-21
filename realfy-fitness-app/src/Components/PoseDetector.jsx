@@ -4,6 +4,7 @@ import { PoseLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-
 import SaveSession from "./SaveSession";
 import OverlayModel from "./OverlayModel";
 import SessionTimer from "./SessionTimer";
+import ThreeAnnotations from "./ThreeAnnotations";
 
 const calculateAngle = (A, B, C) => {
   const AB = { x: B.x - A.x, y: B.y - A.y };
@@ -34,6 +35,7 @@ const PoseDetector = ({ selectedExercise }) => {
   const [borderColor, setBorderColor] = useState("gray");
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [resetSignal, setResetSignal] = useState(false);
+  const [badJointPosition, setBadJointPosition] = useState(null);
 
   const handleReset = () => {
     setRepCount(0);
@@ -92,6 +94,7 @@ const PoseDetector = ({ selectedExercise }) => {
             const angle = calculateAngle(lm[23], lm[25], lm[27]);
             color = angle < 100 ? "green" : "red";
             currentFeedback = angle < 100 ? "Squat Down" : "Go Lower!";
+            setBadJointPosition(angle >= 100 ? [lm[25].x * 2 - 1, -(lm[25].y * 2 - 1), 0] : null);
             if (angle < 100 && phase !== "down") setPhase("down");
             if (angle > 160 && phase === "down") {
               setPhase("up");
@@ -107,6 +110,7 @@ const PoseDetector = ({ selectedExercise }) => {
             const angle = calculateAngle(lm[11], lm[13], lm[15]);
             color = angle > 160 ? "green" : "red";
             currentFeedback = angle < 90 ? "Push-Up Down" : "Go Deeper!";
+            setBadJointPosition(angle <= 90 ? [lm[13].x * 2 - 1, -(lm[13].y * 2 - 1), 0] : null);
             if (angle < 90 && phase !== "down") setPhase("down");
             if (angle > 160 && phase === "down") {
               setPhase("up");
@@ -168,6 +172,10 @@ const PoseDetector = ({ selectedExercise }) => {
       >
         <Webcam ref={webcamRef} mirrored className="absolute top-0 left-0 w-full h-full rounded-xl object-cover z-0" />
         <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full z-10" />
+
+        {badJointPosition && (
+          <ThreeAnnotations width={480} height={270} joint={badJointPosition} message={feedback} />
+        )}
       </div>
 
       <div className="text-center mt-4">
@@ -187,8 +195,9 @@ const PoseDetector = ({ selectedExercise }) => {
         >
           Reset
         </button>
+
         <div className="mt-6">
-         <OverlayModel />
+          <OverlayModel />
         </div>
 
         <div className="mt-4">

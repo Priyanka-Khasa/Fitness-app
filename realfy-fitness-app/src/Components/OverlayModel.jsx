@@ -1,6 +1,6 @@
 import React from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Html } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
 import { Box, Plane, Sphere } from "@react-three/drei";
 
 const OverlayModel = () => {
@@ -11,7 +11,6 @@ const OverlayModel = () => {
         <directionalLight position={[5, 5, 5]} intensity={1} />
         <OrbitControls enableZoom={false} />
 
-        {/* Simple Humanoid - Can be replaced with real model later */}
         <group position={[0, 0, 0]}>
           <Sphere args={[0.3, 32, 32]} position={[0, 2.2, 0]}>
             <meshStandardMaterial color="#fbbf24" />
@@ -33,7 +32,6 @@ const OverlayModel = () => {
           </Box>
         </group>
 
-        {/* Ground Plane */}
         <Plane args={[10, 10]} rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]}>
           <meshStandardMaterial color="#e5e7eb" />
         </Plane>

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
 
-const ThreeAnnotations = ({ width, height, joint, message }) => {
+const ThreeAnnotations = ({ width, height, joint = [0, 0, 0], message = "Fix Form" }) => {
   const mountRef = useRef(null);
 
   useEffect(() => {
@@ -13,7 +13,6 @@ const ThreeAnnotations = ({ width, height, joint, message }) => {
     renderer.setSize(width, height);
     mountRef.current.appendChild(renderer.domElement);
 
-    // Text
     const loader = new THREE.FontLoader();
     loader.load(
       "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
@@ -26,8 +25,13 @@ const ThreeAnnotations = ({ width, height, joint, message }) => {
 
         const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
         const textMesh = new THREE.Mesh(geometry, material);
-        textMesh.position.set(-0.3, 0.3, 0);
+        textMesh.position.set(joint[0], joint[1] + 0.1, joint[2]);
         scene.add(textMesh);
+
+        const dir = new THREE.Vector3(0, 0.1, 0);
+        const origin = new THREE.Vector3(...joint);
+        const arrowHelper = new THREE.ArrowHelper(dir.normalize(), origin, 0.08, 0xff0000);
+        scene.add(arrowHelper);
       }
     );
 
@@ -38,9 +42,11 @@ const ThreeAnnotations = ({ width, height, joint, message }) => {
     animate();
 
     return () => {
-      mountRef.current.removeChild(renderer.domElement);
+      while (mountRef.current.firstChild) {
+        mountRef.current.removeChild(mountRef.current.firstChild);
+      }
     };
-  }, [width, height, message]);
+  }, [width, height, joint, message]);
 
   return (
     <div
@@ -50,8 +56,8 @@ const ThreeAnnotations = ({ width, height, joint, message }) => {
         top: 0,
         left: 0,
         zIndex: 20,
-        width: width,
-        height: height,
+        width,
+        height,
         pointerEvents: "none",
       }}
     />
