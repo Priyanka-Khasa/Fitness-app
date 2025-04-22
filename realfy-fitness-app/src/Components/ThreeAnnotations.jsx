@@ -65,3 +65,4 @@ const ThreeAnnotations = ({ width, height, joint = [0, 0, 0], message = "Fix For
     />
   );
 };
+export default ThreeAnnotations;
