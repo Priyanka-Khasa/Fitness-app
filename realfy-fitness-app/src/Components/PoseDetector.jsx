@@ -1,12 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
-import { PoseLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
+import {
+  PoseLandmarker,
+  FilesetResolver,
+  DrawingUtils,
+  POSE_CONNECTIONS,
+} from "@mediapipe/tasks-vision";
 import SaveSession from "./SaveSession";
 import OverlayModel from "./OverlayModel";
 import SessionTimer from "./SessionTimer";
 import ThreeAnnotations from "./ThreeAnnotations";
 
-// 📐 Utility to calculate angle between 3 keypoints
 const calculateAngle = (A, B, C) => {
   const AB = { x: B.x - A.x, y: B.y - A.y };
   const CB = { x: B.x - C.x, y: B.y - C.y };
@@ -16,7 +20,6 @@ const calculateAngle = (A, B, C) => {
   return (Math.acos(dot / (magAB * magCB)) * 180) / Math.PI;
 };
 
-// 🔊 Speak feedback aloud
 const speak = (text) => {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "en-US";
@@ -25,7 +28,6 @@ const speak = (text) => {
 };
 
 const PoseDetector = ({ selectedExercise }) => {
-  // ✅ Hooks (must come before all conditionals)
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
@@ -40,7 +42,6 @@ const PoseDetector = ({ selectedExercise }) => {
   const [resetSignal, setResetSignal] = useState(false);
   const [badJointPosition, setBadJointPosition] = useState(null);
 
-  // ✅ Prevent hook violation
   if (!selectedExercise) {
     return (
       <div className="text-center mt-8 text-gray-600 text-lg">
@@ -93,6 +94,9 @@ const PoseDetector = ({ selectedExercise }) => {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
 
+        // 🚫 Prevent WebGL crash
+        if (canvas.width === 0 || canvas.height === 0) return;
+
         const result = await poseLandmarker.detectForVideo(video, performance.now());
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -103,9 +107,8 @@ const PoseDetector = ({ selectedExercise }) => {
 
           if (!isTimerRunning) setIsTimerRunning(true);
 
-          // 🏋️ Squat Detection
           if (selectedExercise === "squat") {
-            const angle = calculateAngle(lm[23], lm[25], lm[27]); // Hip-Knee-Ankle
+            const angle = calculateAngle(lm[23], lm[25], lm[27]);
             color = angle < 100 ? "green" : "red";
             currentFeedback = angle < 100 ? "Squat Down" : "Go Lower!";
             setBadJointPosition(angle >= 100 ? [lm[25].x * 2 - 1, -(lm[25].y * 2 - 1), 0] : null);
@@ -120,9 +123,8 @@ const PoseDetector = ({ selectedExercise }) => {
             ctx.fill();
           }
 
-          // 🤸 Push-Up Detection
           if (selectedExercise === "pushup") {
-            const angle = calculateAngle(lm[11], lm[13], lm[15]); // Shoulder-Elbow-Wrist
+            const angle = calculateAngle(lm[11], lm[13], lm[15]);
             color = angle > 160 ? "green" : "red";
             currentFeedback = angle < 90 ? "Push-Up Down" : "Go Deeper!";
             setBadJointPosition(angle <= 90 ? [lm[13].x * 2 - 1, -(lm[13].y * 2 - 1), 0] : null);
@@ -157,7 +159,7 @@ const PoseDetector = ({ selectedExercise }) => {
           }
 
           drawingUtils.drawLandmarks(lm);
-          drawingUtils.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS);
+          drawingUtils.drawConnectors(lm, POSE_CONNECTIONS);
         }
       }
 
