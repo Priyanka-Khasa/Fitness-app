@@ -57,14 +57,14 @@ app.get("/", (req, res) => {
   res.send("🎉 AI Fitness Backend is Running!");
 });
 
-// 🌐 For serving frontend (optional, if you're building together)
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "dist"))); // or 'client/dist' based on build output
+// // 🌐 For serving frontend (optional, if you're building together)
+// if (process.env.NODE_ENV === "production") {
+//   app.use(express.static(path.join(__dirname, "dist"))); // or 'client/dist' based on build output
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "dist", "index.html"));
-  });
-}
+//   app.get("*", (req, res) => {
+//     res.sendFile(path.join(__dirname, "dist", "index.html"));
+//   });
+// }
 
 // 🚀 Start Server
 const PORT = process.env.PORT || 5000;
