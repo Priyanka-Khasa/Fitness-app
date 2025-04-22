@@ -11,23 +11,31 @@ const AuthForm = ({ onAuthSuccess }) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // ✅ This should come before anything else
-
+    e.preventDefault();
+  
     const url = isLogin
-  ? "https://fitness-app-2-tiwu.onrender.com/api/auth/login"
-  : "https://fitness-app-2-tiwu.onrender.com/api/auth/register";
+      ? "https://fitness-app-2-tiwu.onrender.com/api/auth/login"
+      : "https://fitness-app-2-tiwu.onrender.com/api/auth/register";
+  
+    const payload = isLogin
+      ? form
+      : {
+          username: form.name,
+          email: form.email,
+          password: form.password,
+        };
+  
     try {
-      const res = await axios.post(url, form);
-
+      const res = await axios.post(url, payload);
+  
       if (isLogin) {
-        // ✅ Save token and trigger success callback
         localStorage.setItem("token", res.data.token);
         onAuthSuccess(res.data.name);
       } else {
         alert("✅ Registered successfully. Please login.");
         setIsLogin(true);
       }
-
+  
       setError(null);
     } catch (err) {
       setError(
@@ -36,6 +44,7 @@ const AuthForm = ({ onAuthSuccess }) => {
       );
     }
   };
+  
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
