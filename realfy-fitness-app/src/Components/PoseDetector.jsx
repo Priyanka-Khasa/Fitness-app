@@ -3,8 +3,7 @@ import Webcam from "react-webcam";
 import {
   PoseLandmarker,
   FilesetResolver,
-  DrawingUtils,
-  POSE_CONNECTIONS,
+  DrawingUtils
 } from "@mediapipe/tasks-vision";
 import SaveSession from "./SaveSession";
 import OverlayModel from "./OverlayModel";
@@ -93,8 +92,6 @@ const PoseDetector = ({ selectedExercise }) => {
       if (video.readyState === 4) {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-
-        // 🚫 Prevent WebGL crash
         if (canvas.width === 0 || canvas.height === 0) return;
 
         const result = await poseLandmarker.detectForVideo(video, performance.now());
@@ -159,7 +156,7 @@ const PoseDetector = ({ selectedExercise }) => {
           }
 
           drawingUtils.drawLandmarks(lm);
-          drawingUtils.drawConnectors(lm, POSE_CONNECTIONS);
+          drawingUtils.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS); // ✅ fixed usage
         }
       }
 

@@ -1,5 +1,7 @@
-import React, { useRef, useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 
 const ThreeAnnotations = ({ width, height, joint = [0, 0, 0], message = "Fix Form" }) => {
   const mountRef = useRef(null);
@@ -13,11 +15,11 @@ const ThreeAnnotations = ({ width, height, joint = [0, 0, 0], message = "Fix For
     renderer.setSize(width, height);
     mountRef.current.appendChild(renderer.domElement);
 
-    const loader = new THREE.FontLoader();
+    const loader = new FontLoader();
     loader.load(
       "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
       (font) => {
-        const geometry = new THREE.TextGeometry(message, {
+        const geometry = new TextGeometry(message, {
           font,
           size: 0.05,
           height: 0.01,
@@ -63,5 +65,3 @@ const ThreeAnnotations = ({ width, height, joint = [0, 0, 0], message = "Fix For
     />
   );
 };
-
-export default ThreeAnnotations;
