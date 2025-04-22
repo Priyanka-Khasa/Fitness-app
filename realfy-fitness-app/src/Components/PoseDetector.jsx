@@ -6,6 +6,7 @@ import OverlayModel from "./OverlayModel";
 import SessionTimer from "./SessionTimer";
 import ThreeAnnotations from "./ThreeAnnotations";
 
+// 📐 Utility to calculate angle between 3 keypoints
 const calculateAngle = (A, B, C) => {
   const AB = { x: B.x - A.x, y: B.y - A.y };
   const CB = { x: B.x - C.x, y: B.y - C.y };
@@ -15,6 +16,7 @@ const calculateAngle = (A, B, C) => {
   return (Math.acos(dot / (magAB * magCB)) * 180) / Math.PI;
 };
 
+// 🔊 Speak feedback aloud
 const speak = (text) => {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "en-US";
@@ -23,10 +25,11 @@ const speak = (text) => {
 };
 
 const PoseDetector = ({ selectedExercise }) => {
+  // ✅ Hooks (must come before all conditionals)
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
-  const [poseLandmarker, setPoseLandmarker] = useState(null);
   const animationRef = useRef(null);
+  const [poseLandmarker, setPoseLandmarker] = useState(null);
   const [repCount, setRepCount] = useState(0);
   const [feedback, setFeedback] = useState("Start exercising!");
   const [phase, setPhase] = useState(null);
@@ -36,6 +39,15 @@ const PoseDetector = ({ selectedExercise }) => {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [resetSignal, setResetSignal] = useState(false);
   const [badJointPosition, setBadJointPosition] = useState(null);
+
+  // ✅ Prevent hook violation
+  if (!selectedExercise) {
+    return (
+      <div className="text-center mt-8 text-gray-600 text-lg">
+        Please select an exercise to begin.
+      </div>
+    );
+  }
 
   const handleReset = () => {
     setRepCount(0);
@@ -70,6 +82,7 @@ const PoseDetector = ({ selectedExercise }) => {
 
   const detectPose = async () => {
     if (!poseLandmarker || !webcamRef.current || !canvasRef.current) return;
+
     const video = webcamRef.current.video;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -90,8 +103,9 @@ const PoseDetector = ({ selectedExercise }) => {
 
           if (!isTimerRunning) setIsTimerRunning(true);
 
+          // 🏋️ Squat Detection
           if (selectedExercise === "squat") {
-            const angle = calculateAngle(lm[23], lm[25], lm[27]);
+            const angle = calculateAngle(lm[23], lm[25], lm[27]); // Hip-Knee-Ankle
             color = angle < 100 ? "green" : "red";
             currentFeedback = angle < 100 ? "Squat Down" : "Go Lower!";
             setBadJointPosition(angle >= 100 ? [lm[25].x * 2 - 1, -(lm[25].y * 2 - 1), 0] : null);
@@ -106,8 +120,9 @@ const PoseDetector = ({ selectedExercise }) => {
             ctx.fill();
           }
 
+          // 🤸 Push-Up Detection
           if (selectedExercise === "pushup") {
-            const angle = calculateAngle(lm[11], lm[13], lm[15]);
+            const angle = calculateAngle(lm[11], lm[13], lm[15]); // Shoulder-Elbow-Wrist
             color = angle > 160 ? "green" : "red";
             currentFeedback = angle < 90 ? "Push-Up Down" : "Go Deeper!";
             setBadJointPosition(angle <= 90 ? [lm[13].x * 2 - 1, -(lm[13].y * 2 - 1), 0] : null);
@@ -145,6 +160,7 @@ const PoseDetector = ({ selectedExercise }) => {
           drawingUtils.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS);
         }
       }
+
       animationRef.current = requestAnimationFrame(detect);
     };
 
@@ -162,17 +178,24 @@ const PoseDetector = ({ selectedExercise }) => {
     <>
       <div className="text-center mt-6 mb-4">
         <h1 className="text-3xl font-bold text-gray-900">AI Fitness Posture Evaluator</h1>
-        <p className="text-sm text-gray-500 mt-1">Track your Squats and Push-Ups with Real-Time AI Feedback</p>
+        <p className="text-sm text-gray-500 mt-1">
+          Track your Squats and Push-Ups with Real-Time AI Feedback
+        </p>
       </div>
 
       <div
         className={`relative mx-auto w-full max-w-[480px] aspect-video rounded-xl border-4 transition-all duration-300 ${
-          borderColor === "green" ? "border-green-500 shadow-green-300" : "border-red-500 shadow-red-300"
+          borderColor === "green"
+            ? "border-green-500 shadow-green-300"
+            : "border-red-500 shadow-red-300"
         } shadow-xl`}
       >
-        <Webcam ref={webcamRef} mirrored className="absolute top-0 left-0 w-full h-full rounded-xl object-cover z-0" />
+        <Webcam
+          ref={webcamRef}
+          mirrored
+          className="absolute top-0 left-0 w-full h-full rounded-xl object-cover z-0"
+        />
         <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full z-10" />
-
         {badJointPosition && (
           <ThreeAnnotations width={480} height={270} joint={badJointPosition} message={feedback} />
         )}
