@@ -5,15 +5,18 @@ import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 
 const ThreeAnnotations = ({ width, height, joint = [0, 0, 0], message = "Fix Form" }) => {
   const mountRef = useRef(null);
+  const rendererRef = useRef(null);
+  const animationRef = useRef(null);
 
   useEffect(() => {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(70, width / height, 0.1, 1000);
     camera.position.z = 2;
 
-    const renderer = new THREE.WebGLRenderer({ alpha: true });
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(width, height);
     mountRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
 
     const loader = new FontLoader();
     loader.load(
@@ -34,16 +37,30 @@ const ThreeAnnotations = ({ width, height, joint = [0, 0, 0], message = "Fix For
         const origin = new THREE.Vector3(...joint);
         const arrowHelper = new THREE.ArrowHelper(dir.normalize(), origin, 0.08, 0xff0000);
         scene.add(arrowHelper);
+
+        const animate = () => {
+          animationRef.current = requestAnimationFrame(animate);
+          renderer.render(scene, camera);
+        };
+        animate();
       }
     );
 
-    const animate = () => {
-      requestAnimationFrame(animate);
-      renderer.render(scene, camera);
-    };
-    animate();
-
     return () => {
+      // 🧹 Cancel animation loop
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+
+      // 🧹 Dispose renderer to avoid WebGL context leaks
+      if (rendererRef.current) {
+        rendererRef.current.dispose();
+        rendererRef.current.forceContextLoss?.();
+        rendererRef.current.domElement = null;
+        rendererRef.current = null;
+      }
+
+      // 🧹 Clean up DOM (remove canvas)
       while (mountRef.current.firstChild) {
         mountRef.current.removeChild(mountRef.current.firstChild);
       }
@@ -65,4 +82,5 @@ const ThreeAnnotations = ({ width, height, joint = [0, 0, 0], message = "Fix For
     />
   );
 };
+
 export default ThreeAnnotations;
