@@ -43,24 +43,21 @@ const ThreeAnnotations = ({ width, height, joint = [0, 0, 0], message = "Fix For
           renderer.render(scene, camera);
         };
         animate();
+      },
+      undefined,
+      (err) => {
+        console.error("❌ Failed to load font:", err);
       }
     );
 
     return () => {
-      // 🧹 Cancel animation loop
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-
-      // 🧹 Dispose renderer to avoid WebGL context leaks
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
       if (rendererRef.current) {
         rendererRef.current.dispose();
         rendererRef.current.forceContextLoss?.();
         rendererRef.current.domElement = null;
         rendererRef.current = null;
       }
-
-      // 🧹 Clean up DOM (remove canvas)
       while (mountRef.current.firstChild) {
         mountRef.current.removeChild(mountRef.current.firstChild);
       }
