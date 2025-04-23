@@ -10,6 +10,7 @@ import OverlayModel from "./OverlayModel";
 import SessionTimer from "./SessionTimer";
 import ThreeAnnotations from "./ThreeAnnotations";
 
+// 📐 Angle calculation
 const calculateAngle = (A, B, C) => {
   const AB = { x: B.x - A.x, y: B.y - A.y };
   const CB = { x: B.x - C.x, y: B.y - C.y };
@@ -19,6 +20,7 @@ const calculateAngle = (A, B, C) => {
   return (Math.acos(dot / (magAB * magCB)) * 180) / Math.PI;
 };
 
+// 🗣️ Feedback speaker
 const speak = (text) => {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "en-US";
@@ -41,14 +43,6 @@ const PoseDetector = ({ selectedExercise }) => {
   const [resetSignal, setResetSignal] = useState(false);
   const [badJointPosition, setBadJointPosition] = useState(null);
 
-  if (!selectedExercise) {
-    return (
-      <div className="text-center mt-8 text-gray-600 text-lg">
-        Please select an exercise to begin.
-      </div>
-    );
-  }
-
   const handleReset = () => {
     setRepCount(0);
     setPhase(null);
@@ -59,9 +53,10 @@ const PoseDetector = ({ selectedExercise }) => {
     setResetSignal(true);
     setTimeout(() => setResetSignal(false), 100);
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
-    detectPose();
+    detectPose(); // Re-start detection after reset
   };
 
+  // Load PoseLandmarker on mount
   useEffect(() => {
     const loadLandmarker = async () => {
       const vision = await FilesetResolver.forVisionTasks(
@@ -80,84 +75,90 @@ const PoseDetector = ({ selectedExercise }) => {
     loadLandmarker();
   }, []);
 
+  // Detect pose
   const detectPose = async () => {
     if (!poseLandmarker || !webcamRef.current || !canvasRef.current) return;
 
     const video = webcamRef.current.video;
     const canvas = canvasRef.current;
+
+    // Retry if video is not ready
+    if (!video || video.readyState !== 4) {
+      setTimeout(detectPose, 500);
+      return;
+    }
+
     const ctx = canvas.getContext("2d");
     const drawingUtils = new DrawingUtils(ctx);
 
     const detect = async () => {
-      if (video.readyState === 4) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        if (canvas.width === 0 || canvas.height === 0) return;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      if (canvas.width === 0 || canvas.height === 0) return;
 
-        const result = await poseLandmarker.detectForVideo(video, performance.now());
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const result = await poseLandmarker.detectForVideo(video, performance.now());
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        if (result.landmarks.length > 0) {
-          const lm = result.landmarks[0];
-          let color = "green";
-          let currentFeedback = "";
+      if (result.landmarks.length > 0) {
+        const lm = result.landmarks[0];
+        let color = "green";
+        let currentFeedback = "";
 
-          if (!isTimerRunning) setIsTimerRunning(true);
+        if (!isTimerRunning) setIsTimerRunning(true);
 
-          if (selectedExercise === "squat") {
-            const angle = calculateAngle(lm[23], lm[25], lm[27]);
-            color = angle < 100 ? "green" : "red";
-            currentFeedback = angle < 100 ? "Squat Down" : "Go Lower!";
-            setBadJointPosition(angle >= 100 ? [lm[25].x * 2 - 1, -(lm[25].y * 2 - 1), 0] : null);
-            if (angle < 100 && phase !== "down") setPhase("down");
-            if (angle > 160 && phase === "down") {
-              setPhase("up");
-              setRepCount((prev) => prev + 1);
-            }
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(lm[25].x * canvas.width, lm[25].y * canvas.height, 10, 0, 2 * Math.PI);
-            ctx.fill();
+        if (selectedExercise === "squat") {
+          const angle = calculateAngle(lm[23], lm[25], lm[27]);
+          color = angle < 100 ? "green" : "red";
+          currentFeedback = angle < 100 ? "Squat Down" : "Go Lower!";
+          setBadJointPosition(angle >= 100 ? [lm[25].x * 2 - 1, -(lm[25].y * 2 - 1), 0] : null);
+          if (angle < 100 && phase !== "down") setPhase("down");
+          if (angle > 160 && phase === "down") {
+            setPhase("up");
+            setRepCount((prev) => prev + 1);
           }
-
-          if (selectedExercise === "pushup") {
-            const angle = calculateAngle(lm[11], lm[13], lm[15]);
-            color = angle > 160 ? "green" : "red";
-            currentFeedback = angle < 90 ? "Push-Up Down" : "Go Deeper!";
-            setBadJointPosition(angle <= 90 ? [lm[13].x * 2 - 1, -(lm[13].y * 2 - 1), 0] : null);
-            if (angle < 90 && phase !== "down") setPhase("down");
-            if (angle > 160 && phase === "down") {
-              setPhase("up");
-              setRepCount((prev) => prev + 1);
-            }
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(lm[13].x * canvas.width, lm[13].y * canvas.height, 10, 0, 2 * Math.PI);
-            ctx.fill();
-          }
-
-          setBorderColor(color);
-          setFeedback(currentFeedback);
-
-          if (currentFeedback && currentFeedback !== lastSpoken.current) {
-            speak(currentFeedback);
-            lastSpoken.current = currentFeedback;
-          }
-
-          if (repCount > 0 && repCount % 10 === 0 && lastSpoken.current !== "Great job!") {
-            speak("Great job!");
-            lastSpoken.current = "Great job!";
-          }
-
-          if (repCount >= 30 && !isSaved) {
-            setIsSaved(true);
-            setFeedback("Workout Complete! 🎉");
-            speak("Workout Complete!");
-          }
-
-          drawingUtils.drawLandmarks(lm);
-          drawingUtils.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS); // ✅ fixed usage
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(lm[25].x * canvas.width, lm[25].y * canvas.height, 10, 0, 2 * Math.PI);
+          ctx.fill();
         }
+
+        if (selectedExercise === "pushup") {
+          const angle = calculateAngle(lm[11], lm[13], lm[15]);
+          color = angle > 160 ? "green" : "red";
+          currentFeedback = angle < 90 ? "Push-Up Down" : "Go Deeper!";
+          setBadJointPosition(angle <= 90 ? [lm[13].x * 2 - 1, -(lm[13].y * 2 - 1), 0] : null);
+          if (angle < 90 && phase !== "down") setPhase("down");
+          if (angle > 160 && phase === "down") {
+            setPhase("up");
+            setRepCount((prev) => prev + 1);
+          }
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(lm[13].x * canvas.width, lm[13].y * canvas.height, 10, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+
+        setBorderColor(color);
+        setFeedback(currentFeedback);
+
+        if (currentFeedback && currentFeedback !== lastSpoken.current) {
+          speak(currentFeedback);
+          lastSpoken.current = currentFeedback;
+        }
+
+        if (repCount > 0 && repCount % 10 === 0 && lastSpoken.current !== "Great job!") {
+          speak("Great job!");
+          lastSpoken.current = "Great job!";
+        }
+
+        if (repCount >= 30 && !isSaved) {
+          setIsSaved(true);
+          setFeedback("Workout Complete! 🎉");
+          speak("Workout Complete!");
+        }
+
+        drawingUtils.drawLandmarks(lm);
+        drawingUtils.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS);
       }
 
       animationRef.current = requestAnimationFrame(detect);
@@ -166,12 +167,23 @@ const PoseDetector = ({ selectedExercise }) => {
     detect();
   };
 
+  // Trigger pose detection when ready
   useEffect(() => {
-    detectPose();
+    if (poseLandmarker && selectedExercise) {
+      detectPose();
+    }
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, [poseLandmarker, selectedExercise]);
+
+  if (!selectedExercise) {
+    return (
+      <div className="text-center mt-8 text-gray-600 text-lg">
+        Please select an exercise to begin.
+      </div>
+    );
+  }
 
   return (
     <>
@@ -192,6 +204,7 @@ const PoseDetector = ({ selectedExercise }) => {
         <Webcam
           ref={webcamRef}
           mirrored
+          onUserMediaError={() => alert("Webcam access denied or not available!")}
           className="absolute top-0 left-0 w-full h-full rounded-xl object-cover z-0"
         />
         <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full z-10" />
