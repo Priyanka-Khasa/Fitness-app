@@ -1,16 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
-import Webcam from "react-webcam";
 import {
   PoseLandmarker,
   FilesetResolver,
-  DrawingUtils
+  DrawingUtils,
 } from "@mediapipe/tasks-vision";
 import SaveSession from "./SaveSession";
 import OverlayModel from "./OverlayModel";
 import SessionTimer from "./SessionTimer";
 import ThreeAnnotations from "./ThreeAnnotations";
 
-// 📐 Angle calculation
 const calculateAngle = (A, B, C) => {
   const AB = { x: B.x - A.x, y: B.y - A.y };
   const CB = { x: B.x - C.x, y: B.y - C.y };
@@ -20,7 +18,6 @@ const calculateAngle = (A, B, C) => {
   return (Math.acos(dot / (magAB * magCB)) * 180) / Math.PI;
 };
 
-// 🗣️ Feedback speaker
 const speak = (text) => {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "en-US";
@@ -53,10 +50,25 @@ const PoseDetector = ({ selectedExercise }) => {
     setResetSignal(true);
     setTimeout(() => setResetSignal(false), 100);
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
-    detectPose(); // Re-start detection after reset
+    detectPose(); // re-run
   };
 
-  // Load PoseLandmarker on mount
+  useEffect(() => {
+    const startCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        if (webcamRef.current) {
+          webcamRef.current.srcObject = stream;
+          console.log("✅ Webcam stream started");
+        }
+      } catch (err) {
+        console.error("❌ Webcam access denied", err);
+        alert("Please allow camera access.");
+      }
+    };
+    startCamera();
+  }, []);
+
   useEffect(() => {
     const loadLandmarker = async () => {
       const vision = await FilesetResolver.forVisionTasks(
@@ -75,19 +87,17 @@ const PoseDetector = ({ selectedExercise }) => {
     loadLandmarker();
   }, []);
 
-  // Detect pose
   const detectPose = async () => {
     if (!poseLandmarker || !webcamRef.current || !canvasRef.current) return;
 
-    const video = webcamRef.current.video;
-    const canvas = canvasRef.current;
+    const video = webcamRef.current;
 
-    // Retry if video is not ready
     if (!video || video.readyState !== 4) {
       setTimeout(detectPose, 500);
       return;
     }
 
+    const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const drawingUtils = new DrawingUtils(ctx);
 
@@ -167,7 +177,6 @@ const PoseDetector = ({ selectedExercise }) => {
     detect();
   };
 
-  // Trigger pose detection when ready
   useEffect(() => {
     if (poseLandmarker && selectedExercise) {
       detectPose();
@@ -201,10 +210,11 @@ const PoseDetector = ({ selectedExercise }) => {
             : "border-red-500 shadow-red-300"
         } shadow-xl`}
       >
-        <Webcam
+        <video
           ref={webcamRef}
-          mirrored
-          onUserMediaError={() => alert("Webcam access denied or not available!")}
+          autoPlay
+          playsInline
+          muted
           className="absolute top-0 left-0 w-full h-full rounded-xl object-cover z-0"
         />
         <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full z-10" />
