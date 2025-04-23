@@ -22,6 +22,7 @@ const ThreeAnnotations = ({ width, height, joint = [0, 0, 0], message = "Fix For
     loader.load(
       "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
       (font) => {
+        // ✅ Load text only after font is available
         const geometry = new TextGeometry(message, {
           font,
           size: 0.05,
@@ -38,6 +39,7 @@ const ThreeAnnotations = ({ width, height, joint = [0, 0, 0], message = "Fix For
         const arrowHelper = new THREE.ArrowHelper(dir.normalize(), origin, 0.08, 0xff0000);
         scene.add(arrowHelper);
 
+        // ✅ Animate only after everything is ready
         const animate = () => {
           animationRef.current = requestAnimationFrame(animate);
           renderer.render(scene, camera);
@@ -45,12 +47,13 @@ const ThreeAnnotations = ({ width, height, joint = [0, 0, 0], message = "Fix For
         animate();
       },
       undefined,
-      (err) => {
-        console.error("❌ Failed to load font:", err);
+      (error) => {
+        console.error("❌ Failed to load font:", error);
       }
     );
 
     return () => {
+      // 🧹 Clean up animation + renderer + DOM canvas
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       if (rendererRef.current) {
         rendererRef.current.dispose();
