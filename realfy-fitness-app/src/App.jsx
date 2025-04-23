@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "./Components/Navbar";
 import PoseDetector from "./Components/PoseDetector";
-import WorkoutHistory from "./Components/WorkoutHistory";
+import WorkoutHistory from "./Components/Workouthistory";
 import AuthForm from "./Components/AuthForm";
 import { useTheme } from "./Context/ThemeContext";
 
